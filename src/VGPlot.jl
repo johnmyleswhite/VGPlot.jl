@@ -12,7 +12,8 @@ module VGPlot
 		size::Float64
 		shape::String
 	end
-	function geom_point(; size::Real = NaN, shape::String = "")
+	function geom_point(; size::Real = NaN,
+		                  shape::String = "")
 		geom_point(float64(size), shape)
 	end
 	type geom_line
@@ -40,7 +41,12 @@ module VGPlot
 		return VegaData(values = values)
 	end
 
-	function vgplot(df::DataFrame; x::String = "x", y::String = "y", group::String = "group")
+	function vgplot(df::DataFrame;
+		            x::String = "x",
+		            y::String = "y",
+		            group::String = "group",
+		            scalex::String = "linear",
+		            scaley::String = "linear")
 		if !haskey(df, x)
 			# @printf "Input data does not have a column named %s\n" x
 			df[x] = ones(Int, size(df, 1))
@@ -55,20 +61,25 @@ module VGPlot
 		end
 		data = [VegaData(df)]
 		scales = Array(VegaScale, 3)
-		scales[1] = VegaScale(name = :x,
-			                  scaletype = :linear,
-			                  range = :width,
+		scales[1] = VegaScale(name = "x",
+			                  _type = scalex,
+			                  range = "width",
 		                      domain = VegaDataRef("table", string("data.", x)))
-		scales[2] = VegaScale(name = :y,
-			                  scaletype = :linear,
-			                  range = :height,
+		scales[2] = VegaScale(name = "y",
+			                  _type = scaley,
+			                  range = "height",
 		                      domain = VegaDataRef("table", string("data.", y)))
-		scales[3] = VegaScale(name = :group,
-			                  scaletype = :ordinal,
-			                  range = :category10,
+		scales[3] = VegaScale(name = "group",
+			                  _type = "ordinal",
+			                  range = "category10",
 		                      domain = VegaDataRef("table", string("data.", group)))
 	    v = VegaVisualization(data = data,
 		                      scales = scales)
+	    axis1 = VegaAxis(_type = "x", scale = "x", title = "x")
+	    axis2 = VegaAxis(_type = "y", scale = "y", title = "y")
+	    v.axes = [axis1, axis2]
+	    v.legends = [{"fill" => "group", "title" => "Group"}]
+    	return v
 	end
 
 	# Need to use proper field labels here
@@ -94,7 +105,10 @@ module VGPlot
 		if !isempty(p.shape)
 			enterprops.shape = VegaValueRef(value = p.shape)
 		end
-	    push!(v.marks, VegaMark(marktype = :symbol,
+		if v.marks == nothing
+			v.marks = VegaMark[]
+		end
+	    push!(v.marks, VegaMark(_type = "symbol",
 	                            from = {"data" => "table"},
 	                            properties = VegaMarkProperties(enter = enterprops)))
 	    return v
@@ -115,10 +129,13 @@ module VGPlot
 	                          stroke = VegaValueRef(scale = "group",
 	                                                field = groupfield))
 	    innermarks = Array(VegaMark, 1)
-	    innermarks[1] = VegaMark(marktype = :line,
+	    innermarks[1] = VegaMark(_type = "line",
 	                             properties =
 	                               VegaMarkProperties(enter = enterprops))
-	    push!(v.marks, VegaMark(marktype = :group,
+		if v.marks == nothing
+			v.marks = VegaMark[]
+		end
+	    push!(v.marks, VegaMark(_type = "group",
 	                            from = {
 	                                    "data" => "table",
 	                                    "transform" => [{"type" => "facet", "keys" => ["data.group"]}]
@@ -148,7 +165,10 @@ module VGPlot
 	                          fill = VegaValueRef(scale = "group",
 	                          	                 field = groupfield),
 	                          fillOpacity = VegaValueRef(value = 0.5))
-	    push!(v.marks, VegaMark(marktype = :rect,
+		if v.marks == nothing
+			v.marks = VegaMark[]
+		end
+	    push!(v.marks, VegaMark(_type = "rect",
 	                            from = {"data" => "table"},
 	                            properties =
 	                              VegaMarkProperties(enter = enterprops)))
