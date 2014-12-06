@@ -1,6 +1,10 @@
 VGPlot.jl
 =========
 
+# NOTICE
+
+**This package is unmaintained. Its reliability is not guaranteed.**
+
 # Introduction
 
 Everyone loves ggplot2. This package imitates the simplest features from ggplot2 in Julia by using the Vega.jl package to turn Julia data structures into Vega visualization specs.
